@@ -1,7 +1,7 @@
 # Electron Spout
 
 Great thanks to [reitowo](https://github.com/reitowo/electron-spout)
-for this magnificent work. There is a proper README for enthusiastic beginner experts.
+for this magnificent work. There is a proper README for lovely expert beginers.
 
 [Example](https://github.com/reitowo/electron-spout-example)
 
