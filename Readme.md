@@ -1,34 +1,46 @@
-# Electron Spout 
+# Electron Spout
 
-[English](Readme_EN.md) 
+Great thanks to [reitowo](https://github.com/reitowo/electron-spout)
+for this magnificent work. There is a proper README for enthusiastic beginner experts.
 
 [Example](https://github.com/reitowo/electron-spout-example)
 
-通过 OSR 输出 [Electron](https://github.com/electron/electron) 的画面至 [Spout](https://github.com/leadedge/Spout2)
+Share [Electron](https://github.com/electron/electron)'s offscreen window's frame to [Spout](https://github.com/leadedge/Spout2) output.
 
-其监听 `paint` 事件，并发送图像数据至本模块，随后复制进入 Spout 的 D3D11Texture2D 以分享
+It listens to `paint` event and copies the frame data, sends to native module, copies to D3D11Texture2D and share.
 
-## 编译
+## Prerequisites
 
-1. 更新 `package.json` 中的信息，以符合你的 Electron 版本以及架构 
+1. Visual Studio (tested on 2022) with C++ core desktop enviroment
+2. cmake
+3. vcpkg [Install and use packages with CMake](https://learn.microsoft.com/en-us/vcpkg/get_started/get-started?pivots=shell-powershell)
+   > setting VCPKG_ROOT env variable is important
 
-    ```json
-    { 
-      "cmake-js": {
-        "runtime": "electron",
-        "runtimeVersion": "30.0.1",
-        "arch": "x64"
-      }
-    }
-    ```
+## Build
 
-2. 运行 `cmake-js print-configure` 获取 CMake 选项
+1. clone the repo and go to directory,
+2. Update the info in `package.json` according to your electron version.
 
-    ![img.png](img.png)
+   > Set `arch` to `x86` if your project is targeting 32-bit.
 
-3. 复制这些选项并设置到 IDE 中的 CMake 选项中
-   > 注意: 需要将 `-DCMAKE_MSVC_RUNTIME_LIBRARY` 设置为 `MultiThreaded$<$<CONFIG:Debug>:Debug>DLL`，因为 Spout 是静态链接的
-   
+   ```json
+   {
+     "cmake-js": {
+       "runtime": "electron",
+       "runtimeVersion": "30.0.1",
+       "arch": "x64"
+     }
+   }
+   ```
+
+3. Run `npx cmake-js print-configure` to get CMake configuration.
+
+   ![img.png](img.png)
+
+4. Copy these arguments and set these variables to CMake options.
+
+   > Warning: You must change `-DCMAKE_MSVC_RUNTIME_LIBRARY` to `MultiThreaded$<$<CONFIG:Debug>:Debug>DLL` because we link Spout statically.
+
    ```
    -G "Visual Studio 17 2022" -A x64
    -DCMAKE_BUILD_TYPE=Release
@@ -42,23 +54,29 @@
    -DCMAKE_JS_LIB=C:/Users/reito/.cmake-js/electron-x64/v25.8.0/x64/node.lib
    -DCMAKE_SHARED_LINKER_FLAGS=/DELAYLOAD:NODE.EXE
    ```
-   
-   > There are environment dependent values, do not directly copy the text above, and always use the value provided by the command.
-   
-4. 编译并复制 .node 文件使用
 
-## 用法
+   > There are environment dependent values, do not directly copy the text above, and always use the value provided by the command.
+
+5. To configure cmake acording to configuration set the `CMAkeLists.txt` if there is any difference
+
+6. Run `npx cmake-js print-configure` to compile the project.
+
+   > Warning: If you see the error "could not find toolchain file: /scripts/buildsystems/vcpkg.cmake", set your $ENV{VCPKG_ROOT} manually at `PreLoad.cmake`
+
+7. Build and use the .node file in your project
+
+## Usage
 
 ```js
 let win = new BrowserWindow({
-   title: "MyWindow",
-   webPreferences: {
-      preload,
-      offscreen: true,
-      offscreenUseSharedTexture: true
-   },
-   show: false,
-   transparent: true
+  title: "MyWindow",
+  webPreferences: {
+    preload,
+    offscreen: true,
+    offscreenUseSharedTexture: true,
+  },
+  show: false,
+  transparent: true,
 });
 
 const { SpoutOutput } = require("electron_spout.node");
@@ -66,11 +84,11 @@ const osr = new SpoutOutput("Electron Output");
 
 win.webContents.setFrameRate(60);
 win.webContents.on("paint", (event, dirty, image, texture) => {
-   if (texture) {
-      // when offscreenUseSharedTexture = true
-      osr.updateTexture(texture)
-   } else {
-      osr.updateFrame(image.getBitmap(), image.getSize());
-   }
+  if (texture) {
+    // when offscreenUseSharedTexture = true
+    osr.updateTexture(texture);
+  } else {
+    osr.updateFrame(image.getBitmap(), image.getSize());
+  }
 });
 ```
